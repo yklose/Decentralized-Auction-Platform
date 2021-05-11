@@ -9,10 +9,6 @@ contract AuctionHouse {
     event LogDepositMade(address indexed accountAddress, uint amount);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-    constructor() public payable {
-        owner = msg.sender;
-    }
-
     function deposit_money() public payable returns (uint){
         // Deposit money in order to be able to participate
         balances[msg.sender] += msg.value;
