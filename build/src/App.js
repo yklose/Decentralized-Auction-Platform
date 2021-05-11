@@ -41,7 +41,7 @@ class App extends Component {
   runExample = async () => {
     const { accounts, contract } = this.state;
 
-    // Stores a given value, 5 by default.
+    // Deposits a given value, 5 by default.
     await contract.methods.deposit_money().send({ from: accounts[0], value: 5*ether });
 
     // Get the value from the contract to prove it worked.
@@ -57,12 +57,10 @@ class App extends Component {
     }
     return (
       <div className="App">
-        <h1>Good to Go!</h1>
-        <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
         <p>
           If your contracts compiled and migrated successfully, below will show
-          a stored value
+          a stored value  
         </p>
         <p>
           By default, this stored value should be 5, if you've done multiple reloads on this site, it could also be larger
