@@ -1,67 +1,68 @@
 var AuctionHouse = artifacts.require("./AuctionHouse.sol");
 
-const ether = 10**18; // 1 ether = 1000000000000000000 wei
-
-
+const ether = 10**18;
 
 contract("AuctionHouse - basic initialization", function(accounts) {
-  const alice = accounts[0];
-  const bob = accounts[1];
-  const charlie = accounts[2];
-  const dave = accounts[3];
+  // create test accounts
+  const alice = accounts[0];      // Owner
+  const bob = accounts[1];        // Bidder
+  const charlie = accounts[2];    // Bidder
+  const dave = accounts[3];       // Bidder
   
-  
-
-  describe("transfer money to bob", async () => {
-    it("deposit money", async () => {
+  describe("Testing Auction", async () => {
+    it("test auction with one timeout", async () => {
       const auction = await AuctionHouse.deployed();
 
       // deposit money
-      await auction.deposit_money({from: bob, value: web3.utils.toBN(50*ether)});
-      await auction.deposit_money({from: charlie, value: web3.utils.toBN(50*ether)});
-      await auction.deposit_money({from: dave, value: web3.utils.toBN(50*ether)});
+      await auction.deposit_money({from: bob, value: web3.utils.toBN(5*ether)});
+      await auction.deposit_money({from: charlie, value: web3.utils.toBN(5*ether)});
+      await auction.deposit_money({from: dave, value: web3.utils.toBN(5*ether)});
 
-      // show initial balance on account
-      const balanceBob = await auction.get_balance({from: bob});
-      console.log("Bobs Balance: ", balanceBob.toString()/ether);
+      // Owner (Alice) starts the auction
+      await auction.start_auction({from: alice})
 
-      
       // Bob bids 40 ether
-      const bidBob = 40 * ether;
-      await auction.set_bid({from: bob, value: web3.utils.toBN(bidBob)});
+      const bidBob = 40;
+      await auction.set_bid(bidBob, {from: bob});
 
-      // Charlie bids 40 ether
-      const bidCharlie = 38 * ether;
-      await auction.set_bid({from: charlie, value: web3.utils.toBN(bidCharlie)});
+      // wait for 1 second
+      await new Promise(r => setTimeout(r, 3000));
 
-      // Dave bids 40 ether
-      const bidDave = 43 * ether;
-      await auction.set_bid({from: dave, value: web3.utils.toBN(bidDave)});
+      // Charlie bids 38 ether
+      const bidCharlie = 38;
+      await auction.set_bid(bidCharlie, {from: charlie});
 
-      // Dave bids 39 ether (should not be accepted)
-      // const bidDaveNew = 39 * ether;
-      // await auction.set_bid({from: dave, value: web3.utils.toBN(bidDaveNew)});
-      
+      // Dave bids 18 ether
+      const bidDave = 18;
+      await auction.set_bid(bidDave, {from: dave});
 
+      // wait for another 2 seconds (should be outside the interval)
+      await new Promise(r => setTimeout(r, 2000));
 
-      
+      // Dave updates bids 44 ether (should be outside the time interval)
+      const bidDaveUpdate = 44;
+      await auction.set_bid(bidDaveUpdate, {from: dave});
+
+    
+      // ---------------- PRINTING STATISTICS ----------------
+  
+      // get endtime
+      const endTime    = await auction.get_endtime({from: bob});
       // get all balances
-      const balanceAlice    = await auction.get_bid({from: alice});
       const EndBidBob       = await auction.get_bid({from: bob});
       const EndBidCharlie   = await auction.get_bid({from: charlie});
       const EndBidDave      = await auction.get_bid({from: dave});
-
-
-      console.log("Alice(Owner)    Balance: ", balanceAlice.toString()/ether);
-      console.log("Bobs      Bid: ", EndBidBob.toString()/ether);
-      console.log("Charlies  Bid: ", EndBidCharlie.toString()/ether);
-      console.log("Daves     Bid: ", EndBidDave.toString()/ether);
-      
-      // get highest bid
-      //const highestBid = await auction.get_highest_bid({from: alice});
-      //console.log("Highest Bid: ", highestBid);
-
-
+      // get all timestamps
+      const TimeBidBob       = await auction.get_timestamp({from: bob});
+      const TimeBidCharlie   = await auction.get_timestamp({from: charlie});
+      const TimeBidDave      = await auction.get_timestamp({from: dave});
+      // show results
+      console.log("")
+      console.log("Endtime: ", endTime.toString());
+      console.log("")
+      console.log("Bobs      Bid: ", EndBidBob.toString(), "Timestamp: ", TimeBidBob.toString());
+      console.log("Charlies  Bid: ", EndBidCharlie.toString(), "Timestamp: ", TimeBidCharlie.toString());
+      console.log("Daves     Bid: ", EndBidDave.toString(), "Timestamp: ", TimeBidDave.toString());
     });  
   });
 }); 
