@@ -3,9 +3,14 @@
 First very simple implementation of an action house. 
 
 Current Rules:
-- you can only bid what you have in your virtual account. 
-- Once you have bid, you cannot take back or reduce your bid. 
-- The owner can not bid on the object
+- Contact creater is owner (seller)
+- The owner (seller) can not bid on the object
+- Bidders need to deposit 5 ether to place bids
+- The owner need to start the auction (predefined auction interval)
+- Bids from bidders are only accepted during auction interval
+- Bid is no crypto currency (on purpose!) 
+- You can not take back your bid or reduce your bid
+
 
 # Required Dependencies
 - Install [Ganache](https://www.trufflesuite.com/ganache) for running the blockchain locally
