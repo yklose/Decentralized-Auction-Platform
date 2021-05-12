@@ -39,8 +39,8 @@ contract("AuctionHouse - basic initialization", function(accounts) {
       await auction.set_bid({from: dave, value: web3.utils.toBN(bidDave)});
 
       // Dave bids 39 ether (should not be accepted)
-      const bidDaveNew = 39 * ether;
-      await auction.set_bid({from: dave, value: web3.utils.toBN(bidDaveNew)});
+      // const bidDaveNew = 39 * ether;
+      // await auction.set_bid({from: dave, value: web3.utils.toBN(bidDaveNew)});
       
 
 
