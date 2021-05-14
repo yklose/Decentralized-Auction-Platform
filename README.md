@@ -36,3 +36,7 @@ Current Rules:
     2. `truffle migrate` - migrate the contracts to the blockchain (can be seen in Ganache)
     3. `cd build`
     4. `npm run start` - hosts the frontend located in build/src on localhost:3000
+
+# Test the contracts
+
+Run `truffle test`

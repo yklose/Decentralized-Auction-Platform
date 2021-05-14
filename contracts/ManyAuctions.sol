@@ -2,11 +2,6 @@ pragma solidity ^0.8.0;
 // SPDX-License-Identifier: UNLICENSED
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/**
-Difference to AuctionHouse:
-- Bidders are predetermined by owner on startup
-- Many Auctions are supported
- */
 contract ManyAuctions is Ownable {
     uint256 ether_var = 10**18;
     uint interval = 5000;
@@ -56,9 +51,15 @@ contract ManyAuctions is Ownable {
     /**
     returns winner, ends auction
     */
-    function get_winner(uint auction) onlyOwner public returns (address, uint) {
+    function finish(uint auction) onlyOwner public returns (address, uint) {
         Auction storage auct = auctions[auction];
         auct.active = false;
+        return get_winner(auction);
+    }
+
+    function get_winner(uint auction) public view returns (address, uint) {
+        Auction storage auct = auctions[auction];
+        require(!auct.active);
         address winner;
         uint winning_bid;
         for (uint256 i = 0; i < auct.bidders.length; i++) {
