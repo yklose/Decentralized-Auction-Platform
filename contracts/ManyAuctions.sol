@@ -54,7 +54,7 @@ contract ManyAuctions is Ownable {
     }
 
     /**
-    returns winner. The end of the auction is implicit because the end_time must be over. There is no need to save this explicitly
+    returns winner, ends auction
     */
     function get_winner(uint auction) onlyOwner public returns (address, uint) {
         Auction storage auct = auctions[auction];
