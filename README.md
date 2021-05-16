@@ -1,15 +1,19 @@
 # Simple AuctionHouse
 
-First very simple implementation of an action house. 
+First implementation of an action house. 
 
 Current Rules:
-- Contact creater is owner (seller)
+- Multiple contracts are allowed 
+- Everyone can create a auction and is automatically the owner
 - The owner (seller) can not bid on the object
 - Bidders need to deposit 5 ether to place bids
+- If the action has not started, bidders can refund the action
 - The owner need to start the auction (predefined auction interval)
 - Bids from bidders are only accepted during auction interval
 - Bid is no crypto currency (on purpose!) 
 - You can not take back your bid or reduce your bid
+- Once the time is over, everyone can call the get winner function and see who won. (change in future version!)
+- The owner can now kill the auction. All deposits are automatically send back to the bidders. 
 
 
 # Required Dependencies

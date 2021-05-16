@@ -1,3 +1,5 @@
+/*
+
 pragma solidity ^0.8.0;
 // SPDX-License-Identifier: UNLICENSED
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -48,9 +50,9 @@ contract ManyAuctions is Ownable {
         auct.bids[msg.sender] = new_bid;
     }
 
-    /**
-    returns winner, ends auction
-    */
+    
+    //returns winner, ends auction
+    
     function finish(uint auction) onlyOwner public returns (address, uint) {
         Auction storage auct = auctions[auction];
         auct.active = false;
@@ -73,3 +75,5 @@ contract ManyAuctions is Ownable {
     }
 
 }
+
+*/

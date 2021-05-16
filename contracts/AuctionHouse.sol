@@ -1,124 +1,153 @@
+//pragma solidity ^0.5.8;
 pragma solidity ^0.8.0;
-// SPDX-License-Identifier: UNLICENSED
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AuctionHouse is Ownable {
-    mapping (uint => address payable) private bidders;
-    mapping (address => uint) private bids;
-    mapping (address => uint) private deposit;
-    mapping (address => uint) private timestamp;
+contract AuctionHouse {
+
+    struct Auction {
+        address owner;
+        uint endtime; 
+        bool active; 
+        address[] bidders;
+        mapping (address => uint) bids;
+        mapping (address => uint) deposit;   
+    }
+
+    Auction[] auctions;
 
     // define variables
-    uint _total_bidders;
     uint256 ether_var = 10**18;
-    uint256 endtime;
-    uint256 interval = 5; // If nothing happens for $interval blocks the auction is over
-    bool active = false;
+    uint256 max_num_contracts = 10**10;
+    uint256 interval = 7;
 
     // Log the event about a deposit being made by an address and its amount
     event LogDepositMade(address indexed accountAddress, uint amount);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-    constructor() public payable {}
-
-    modifier onlyNotOwner {
-        require(msg.sender != owner());
-        _;
+    constructor() public payable{
+        // TODO: add something here
     }
 
-    modifier onlyDeposited {
-        require(deposit[msg.sender]>=5*ether_var);
-        _;
+    function get_owner(uint idx) public view returns (address){
+        // returns the address of the owner for certain id 
+        return auctions[idx].owner;
     }
 
-    function start_auction() public payable onlyOwner {
-        //start the auction, setting timelimit, can only not be reactivated
-        require(!active && endtime == 0); // Contract should not already be finished
-        endtime = block.timestamp + interval;
-        active = true;
-    }
-
-    function deposit_money() public payable onlyNotOwner returns (uint) {
-        // Deposit money in order to be able to participate
-        require(msg.value > 0);
-        if (deposit[msg.sender] == 0) {
-            // This sender has not made a deposit yet
-            // Lets save that it has made a deposit so we can iterate over all senders later
-            bidders[_total_bidders] = payable(msg.sender);
-            _total_bidders++;
+    function is_owner(address add, uint idx) public view returns (bool){
+        if (add == auctions[idx].owner){
+            return true;
         }
-        deposit[msg.sender] += msg.value;
-        emit LogDepositMade(msg.sender, msg.value);
-        return deposit[msg.sender];
-    }
-
-    function get_deposit_balance() public view returns (uint) {
-        // gets the balances of bidders
-        return deposit[msg.sender];
-    }
-
-    function set_bid(uint bid_value) public onlyNotOwner onlyDeposited {
-        // contract has to be active
-        require(active);
-        // only accept bid if its higher than the previous bid (and > 0)
-        require(bid_value > bids[msg.sender] && bid_value > 0);
-        // only accept bid if in valid time period
-        require(endtime > block.timestamp);
-        bids[msg.sender] = bid_value;
-        timestamp[msg.sender] = block.timestamp;
-        endtime = block.timestamp + interval;
-
-    }
-
-    function get_bid() public view returns (uint) {
-        // returns last/highest bid of bidder
-        return bids[msg.sender];
-    }
-
-    function get_endtime() public view returns (uint) {
-        // returns the endtime
-        return endtime;
-    }
-
-    /**
-    the owner can finish the auction, at which point the deposits will be paid back
-    and the winner can be determined by anyone by viewing view_winner()
-     */
-    function finish_auction() public onlyOwner {
-        require(active);
-        require(block.timestamp > endtime);
-        active = false;
-        // TODO now the owner has to pay the gas to return the deposit
-        // but i think thats good because the owner profits from the gas deposit
-        for (uint256 i = 0; i < _total_bidders; i++) {
-            address payable curr = bidders[i];
-            uint deposited = deposit[curr];
-            deposit[curr] = 0;
-            curr.transfer(deposited);
+        else{
+            return false;
         }
     }
 
-    /**
-    if the contract is not active anymore
-     */
-    function view_winner() public view returns (address, uint, uint) {
-        require(!active);
-        address winner;
-        uint best_bid = 0;
-        require(_total_bidders > 0);
-        for (uint256 i = 0; i < _total_bidders; i++) {
-            address curr = bidders[i];
-            if (bids[curr] > best_bid) {
-                best_bid = bids[curr];
-                winner = curr;
+    function get_id(address owner) public view returns (uint){
+        for (uint256 idx = 0; idx < auctions.length; idx++) {
+            if (is_owner(owner, idx)){
+                return idx;
             }
         }
-        return (winner, bids[winner], timestamp[winner]);
+        return max_num_contracts+1; // TODO: larger value
     }
 
-    function get_timestamp() public view returns (uint) {
-        // returns the timestamp of the last/highest bid of the bidder
-        // Probably not secure! (TODO: add verification like in lecture 1)
-        return timestamp[msg.sender];
+    function deploy_auction() public payable{
+        // deploy an auction
+        uint idx = auctions.length;
+        // check if maximum number of contracts is reached
+        if (idx < max_num_contracts){
+            auctions.push();
+            // define parameters
+            Auction storage new_auct = auctions[idx];
+            new_auct.endtime = block.number + interval;
+            new_auct.owner = msg.sender;
+        }
     }
+
+    function start_auction(uint idx) public payable {
+        //start the auction, setting timelimit, can only not be reactivated
+        if (msg.sender == auctions[idx].owner && auctions[idx].active == false){
+            auctions[idx].endtime = block.number + interval;
+            auctions[idx].active = true;
+        }
+    }
+
+    function deposit_money(uint idx) public payable returns (uint){
+        // Deposit money in order to be able to participate
+        auctions[idx].deposit[msg.sender] += msg.value;
+        auctions[idx].bidders.push(msg.sender);
+        return auctions[idx].deposit[msg.sender];
+    }
+
+    function get_deposit_balance(uint idx) public view returns (uint){
+        // gets the balances of bidders
+        return auctions[idx].deposit[msg.sender];
+    }
+
+    function set_bid(uint idx, uint bid_value) public {
+        // contract has to be active
+        if (auctions[idx].active){
+            // the owner can not bid
+            if (msg.sender != auctions[idx].owner){
+                // you can not bid if you have not deposit inital money (5 Ether)
+                if (auctions[idx].deposit[msg.sender]>=5*ether_var){
+                    // only accept bid if its higher than the previous bid
+                    if (bid_value > auctions[idx].bids[msg.sender]) {
+                        // only accept bid if in valid time period
+                        if (auctions[idx].endtime > create_timestamp()){
+                            auctions[idx].bids[msg.sender] = bid_value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function get_bid(uint idx) public view returns (uint){
+        // returns last/highest bid of bidder
+        return auctions[idx].bids[msg.sender];
+    }
+
+    function get_endtime(uint idx) public view returns (uint){
+        // returns the endtime
+        return auctions[idx].endtime;
+    }
+
+    function create_timestamp() public view returns (uint256){
+        // creates timestamp
+        return block.number;
+    }
+
+    function kill(uint idx) public{
+        // transfers back all deposts for auction id
+        require(msg.sender == auctions[idx].owner);
+        require(block.number > auctions[idx].endtime);
+        for (uint256 i = 0; i < auctions[idx].bidders.length; i++) {
+            address bidder = auctions[idx].bidders[i];
+            uint deposit = auctions[idx].deposit[auctions[idx].bidders[i]];
+            payable(bidder).transfer(deposit);
+            auctions[idx].deposit[auctions[idx].bidders[i]] = 0;
+        }
+    }    
+
+    function get_winner(uint idx) public view returns (address, uint) {
+        require((auctions[idx].endtime < block.number));
+        uint winning_bid=0;
+        address winner_address=get_owner(idx);
+        for (uint256 i = 0; i < auctions[idx].bidders.length; i++) {
+            address curr_bidder = auctions[idx].bidders[i];
+            if (auctions[idx].bids[curr_bidder] > winning_bid){
+                winning_bid = auctions[idx].bids[curr_bidder];
+                winner_address = curr_bidder;
+            }
+        }  
+        return (winner_address, winning_bid);
+    }
+
+    function refund_deposit(uint idx) public {
+        // refund the deposit if action is not active 
+        require(auctions[idx].active == false);
+        payable(msg.sender).transfer(auctions[idx].deposit[msg.sender]);
+        auctions[idx].deposit[msg.sender] = 0;
+    }
+
 }

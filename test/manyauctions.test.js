@@ -1,3 +1,5 @@
+/*
+
 var ManyAuctions = artifacts.require("./ManyAuctions.sol");
 
 const ether = 10 ** 18;
@@ -24,3 +26,5 @@ contract("ManyAuctions - basic initialization", function (accounts) {
     });
   });
 });
+
+*/
