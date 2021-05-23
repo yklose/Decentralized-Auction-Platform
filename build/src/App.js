@@ -2,12 +2,19 @@ import React, { Component } from "react";
 import AuctionHouse from "./contracts/AuctionHouse.json";
 import getWeb3 from "./getWeb3";
 
-import "./App.css";
+import { BrowserRouter as Router, Route } from "react-router-dom"
+
+import { Col, Row, Container, Button } from 'react-bootstrap';
+import LoadingButton from './components/LoadingButton'; 
+import CustomNavbar from './components/CustomNavbar';
+import Items from './components/Items';
+import AddExhibit from "./components/AddAd";
+import BecomeAuctioneer from "./components/BecomeAuctioneer";
 
 const ether = 10**18;
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  state = { accountBalance: 0, web3: null, accounts: null, contract: null, showAddAuction: false };
 
   componentDidMount = async () => {
     try {
@@ -28,7 +35,7 @@ class App extends Component {
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runExample);
+      this.setState({ web3, accounts, contract: instance });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -38,35 +45,53 @@ class App extends Component {
     }
   };
 
-  runExample = async () => {
+  deposit5ETH = async () => {
     const { accounts, contract } = this.state;
-
-    // Deposits a given value, 5 by default.
     await contract.methods.deposit_money().send({ from: accounts[0], value: 5*ether });
+  }
 
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get_balance().call();
+  getBalance = async () => {
+    const { accounts, contract } = this.state;
+    const response = await contract.methods.get_balance().call({ from: accounts[0] });
+    this.setState({ accountBalance: response / ether });
+  }
 
-    // Update state with the result.
-    this.setState({ storageValue: response / ether });
-  };
+  addExhibit = (exhibit) => {
+    console.log(exhibit);
+  }
 
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
     return (
-      <div className="App">
-        <h2>Smart Contract Example</h2>
-        <p>
-          If your contracts compiled and migrated successfully, below will show
-          a stored value  
-        </p>
-        <p>
-          By default, this stored value should be 5, if you've done multiple reloads on this site, it could also be larger
-        </p>
-        <div>The stored value is: {this.state.storageValue}</div>
-      </div>
+      <Router>
+        <CustomNavbar brand="Blockchain Project"/>
+        <Container fluid style={{width: "90%"}}>
+          <Route path="/" exact render={(props) => (
+            <>
+              <Button variant="outline-secondary" onClick={() => this.setState({ showAddAuction: true})}>Click here</Button>
+              {this.state.showAddAuction && <AddExhibit 
+                onAdd={this.addExhibit} show={this.state.showAddAuction} 
+                onClose={() => this.setState({ showAddAuction: false})}/>}
+              <Row>
+              <Items items={["First Item", "Second Item", "Third Item", "Fourth Item"]}/>
+              </Row> 
+              <Row>
+                <LoadingButton variant="primary" style={{marginRight: '20px'}} text="Deposit 5ETH" onClick={this.deposit5ETH}/>
+                <LoadingButton variant="primary" text="Show Balance" onClick={this.getBalance}/>
+              </Row>
+              <Col>
+                <h2>
+                  {!this.state.accountBalance ? "Not requested yet" : this.state.accountBalance}
+                </h2>
+              </Col>
+            </>
+          )} />
+          <Route path="/owner" component={BecomeAuctioneer}/>
+          
+        </Container>
+      </Router>
     );
   }
 }
