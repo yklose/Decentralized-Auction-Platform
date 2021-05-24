@@ -1,5 +1,3 @@
-/*
-
 var ManyAuctions = artifacts.require("./ManyAuctions.sol");
 
 const ether = 10 ** 18;
@@ -18,13 +16,12 @@ contract("ManyAuctions - basic initialization", function (accounts) {
       // Owner (Alice) starts the auction
       await auction.createAuction([bob, charlie], { from: alice })
 
-      await auction.bid(0,10, { fom: bob})
-      await auction.bid(0,20, { fom: charlie })
+      await auction.bid(0,10, { from: bob})
+      await auction.bid(0,20, { from: charlie })
 
       await auction.finish(0, {from: alice});
-      console.log(await auction.get_winner(0))
+      let winner = await auction.get_winner(0);
+      console.log();
     });
   });
 });
-
-*/
