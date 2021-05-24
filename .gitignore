@@ -1,3 +1,4 @@
 /build/node_modules
 /build/yarn.lock
+/api/node_modules
 node_modules

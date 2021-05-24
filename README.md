@@ -30,7 +30,7 @@ Current Rules:
     - Choose Workload **Desktop Development with C++** (Needed for compiling underlying node libraries using C++)
     - Run npm install in build/
 
-# Running everything
+# Running blockchain
 1. Set Up Ganache + Metamask
     1. Add new Ganache Project using the truffle-config.js
     2. Set up Metamask to [connect to Ganache](https://www.trufflesuite.com/docs/truffle/getting-started/truffle-with-metamask#setting-up-metamask)
@@ -40,6 +40,7 @@ Current Rules:
     2. `truffle migrate` - migrate the contracts to the blockchain (can be seen in Ganache)
     3. `cd build`
     4. `npm run start` - hosts the frontend located in build/src on localhost:3000
+    5. `cd api`, `npm run start` - hosts the backend api located in api/ on localhost:5000
 
 # Test the contracts
 
