@@ -2,18 +2,23 @@
 
 First implementation of an action house. 
 
-Current Rules:
+**Current Rules**:
 - Multiple contracts are allowed 
+- Auction types are: sealed and open
 - Everyone can create a auction and is automatically the owner
+- To create an auction an identifier is needed. This idendifier is unique and will not be accepted otherwise. 
+- Bidders can get the auction index by having the auction identifier (maybe combine in future version)
 - The owner (seller) can not bid on the object
 - Bidders need to deposit 5 ether to place bids
-- If the action has not started, bidders can refund the action
+- If the action has not started, bidders can refund the deposit
 - The owner need to start the auction (predefined auction interval)
 - Bids from bidders are only accepted during auction interval
 - Bid is no crypto currency (on purpose!) 
-- You can not take back your bid or reduce your bid
-- Once the time is over, everyone can call the get winner function and see who won. (change in future version!)
-- The owner can now kill the auction. All deposits are automatically send back to the bidders. 
+- For sealed auctions the bid is hashed with a user specific nonce
+- You can not take back your bid (or reduce your bid)
+- Once the time is over, everyone can call the get winner function and see who won if the auction was configured as open.
+- The owner can kill the auction after the time interval. All deposits are automatically send back to the bidders. 
+- If the owner does not kill the auction bidders can refund the deposit after the auction interval is expired. 
 
 
 # Required Dependencies
