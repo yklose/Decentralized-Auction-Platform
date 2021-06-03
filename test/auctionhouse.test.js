@@ -26,18 +26,12 @@ contract("AuctionHouse - basic initialization", function(accounts) {
 
     it("Deploy two contracts and let bidders deposit money and refund before auction started", async () => {
       //const auction = await AuctionHouse.deployed();
-      await auction.deploy_auction(0002, false, {from: alice});
-      await auction.deploy_auction(0003, false, {from: bob});
+      const auction_id0 = 0002;
+      const auction_id1 = 0003;
+      await auction.deploy_auction(auction_id0, false, {from: alice});
+      await auction.deploy_auction(auction_id1, false, {from: bob});
 
-      var auction_id0;
-      await auction.get_idx_from_identifier.call(0002, {from: alice}).then(function(idx){
-        auction_id0 = idx;
-      });
-      var auction_id1;
-      await auction.get_idx_from_identifier.call(0003, {from: alice}).then(function(idx){
-        auction_id1 = idx;
-      });
-
+      
       // let bidders deposit money on auction 0
       await auction.deposit_money(auction_id0, {from: bob, value: web3.utils.toBN(5*ether)});
       await auction.deposit_money(auction_id0, {from: charlie, value: web3.utils.toBN(5*ether)});
@@ -79,18 +73,10 @@ contract("AuctionHouse - basic initialization", function(accounts) {
     
     it("Full test with two auctions 3 bidders and winner determination", async () => {
       // Use special user identifier for deploying an auction
-      await auction.deploy_auction(1111, false, {from: alice});
-      await auction.deploy_auction(2222, false, {from: bob});
-
-      // get auction id on blockchain using the identifier
-      var auction_id0;
-      await auction.get_idx_from_identifier.call(1111, {from: alice}).then(function(idx){
-        auction_id0 = idx;
-      });
-      var auction_id1;
-      await auction.get_idx_from_identifier.call(2222, {from: alice}).then(function(idx){
-        auction_id1 = idx;
-      });
+      const auction_id0 = 1111;
+      const auction_id1 = 2222;
+      await auction.deploy_auction(auction_id0, false, {from: alice});
+      await auction.deploy_auction(auction_id1, false, {from: bob});
 
       // let bidders deposit money on auction 0
       await auction.deposit_money(auction_id0, {from: bob, value: web3.utils.toBN(5*ether)});
@@ -111,8 +97,6 @@ contract("AuctionHouse - basic initialization", function(accounts) {
       // Bob Bids:
       const bidBob0 = 40;
       await auction.set_bid(auction_id0, bidBob0, 0, {from: bob});
-      // wait for 1 second
-      await new Promise(r => setTimeout(r, 3000));
       // Charlie Bids:
       const bidCharlie0 = 38;
       await auction.set_bid(auction_id0, bidCharlie0, 0, {from: charlie});
@@ -123,12 +107,19 @@ contract("AuctionHouse - basic initialization", function(accounts) {
       await auction.set_bid(auction_id0, bidDave0, 0, {from: dave});
       const bidDave1 = 19;
       await auction.set_bid(auction_id1, bidDave1, 0, {from: dave});
+      const bidDave2 = 22;
+      await auction.set_bid(auction_id1, bidDave2, 0, {from: dave});
       // wait for another 2 seconds (should be outside the interval)
       await new Promise(r => setTimeout(r, 2000));
       // Dave updates bids 44 ether (should be outside the time interval)
       const bidDaveUpdate = 44;
-      await auction.set_bid(auction_id0, bidDaveUpdate, 0, {from: dave});
-
+      try{
+        await auction.set_bid(auction_id0, bidDaveUpdate, 0, {from: dave});
+      }
+      catch{
+        console.log("Could not place Daves bid (44)");
+      }
+  
       // ----------------------------- STATISTICS -----------------------------
       // get highest bids of all bidders (auction id=0)
       const EndBidBob       = await auction.get_bid(auction_id0,{from: bob});
@@ -169,22 +160,15 @@ contract("AuctionHouse - basic initialization", function(accounts) {
 
     it("Deploy one sealed auction with published hash value", async () => {
       // Use special user identifier for deploying an auction
+      const auction_id0 = 3333;
       await auction.deploy_auction(3333, true, {from: alice});
-      // these functions can be called by anyone!
-      var auction_id0;
-      await auction.get_idx_from_identifier.call(3333, {from: alice}).then(function(idx){
-        auction_id0 = idx;
-      });
     });
 
     it("Deploy one sealed auction with published hash value", async () => {
       // Use special user identifier for deploying an auction
-      await auction.deploy_auction(4444, true, {from: alice});
-      // these functions can be called by anyone!
-      var auction_id0;
-      await auction.get_idx_from_identifier.call(4444, {from: alice}).then(function(idx){
-        auction_id0 = idx;
-      });
+      const auction_id0 = 4444;
+      await auction.deploy_auction(auction_id0, true, {from: alice});
+
       // let bidders deposit money on auction 0
       await auction.deposit_money(auction_id0, {from: bob, value: web3.utils.toBN(5*ether)});
       await auction.deposit_money(auction_id0, {from: charlie, value: web3.utils.toBN(5*ether)});
