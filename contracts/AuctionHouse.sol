@@ -16,8 +16,6 @@ contract AuctionHouse {
 
     Auction[] auctions;
 
-    // define variables
-    uint256 ether_var = 10**18;
     uint256 interval = 8; 
     
     // define events
@@ -122,7 +120,7 @@ contract AuctionHouse {
         // sets the bid, requirements have to be fulfilled 
         require(auctions[idx].active);
         require(msg.sender != auctions[idx].owner);
-        require(auctions[idx].deposit[msg.sender]>=5*ether_var);
+        require(auctions[idx].deposit[msg.sender]>=5 ether);
         require(auctions[idx].endtime > create_timestamp());
 
         if (auctions[idx].sealed_auction == true){
@@ -139,6 +137,18 @@ contract AuctionHouse {
     function get_bid(uint idx) public view returns (uint){
         // returns last/highest bid of bidder
         return auctions[idx].bids[msg.sender];
+    }
+
+    function get_highest_bid(uint idx) public view returns (uint) {
+        require(auctions[idx].sealed_auction == false);
+        uint winning_bid=0;
+        for (uint256 i = 0; i < auctions[idx].bidders.length; i++) {
+            address curr_bidder = auctions[idx].bidders[i];
+            if (auctions[idx].bids[curr_bidder] > winning_bid){
+                winning_bid = auctions[idx].bids[curr_bidder];
+            }
+        }  
+        return winning_bid;
     }
 
     function get_endtime(uint idx) public view returns (uint){
