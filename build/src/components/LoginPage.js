@@ -13,7 +13,7 @@ const LoginPage = ({ setupAccount, isConnected }) => {
     
     return (
         <Container>
-            <h2 className="center-items">Sign in to your wallet</h2>
+            <h2 className="center-items" style={{marginTop: "2rem"}}>Sign in to your wallet</h2>
             <Image src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="25%" className="center-items" style={{margin: "auto"}}></Image>
             <Row className="center-items">
                 <LoadingButton onClick={setupAccount} text="Connect to MetaMask wallet" variant="primary" size="lg"/>

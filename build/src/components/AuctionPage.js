@@ -32,10 +32,8 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 			let auction_arr = auctions.filter((e) => e.identifier === identifier)
 			if(auction_arr.length !== 0) {
 				setAuction(auction_arr[0])
-				runHolder("auction-holder-image")
 			} else {
 				setAuction({item: "Unnamed auction", description: "Unnamed Artist", img: "holder.js/500x500", sealed: false})
-				runHolder("auction-holder-image")
 			}
 		}
 
@@ -57,6 +55,7 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 		
 		fetch_auction_data(parseInt(match.params.identifier))
 		fetch_auction_idx(match.params.identifier)
+		runHolder("auction-holder-image")
 
 	}, [match, auctions, contract, isConnected])
 
@@ -86,7 +85,7 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 		<Container style={{ maxWidth: "90%", marginTop: "1rem" }}>
 			<Row>
 				<Col xs="6" className="center-items">
-					<Image src={auction.img} className="auction-holder-image" rounded style={{margin: "auto"}} />
+					<Image src={auction.img === undefined ? "holder.js/100px160" : auction.img} className="auction-holder-image" rounded style={{margin: "auto"}} />
 				</Col>
 				<Col xs={{span: 4, offset: 1}} style={{ margin: "auto", color: "grey" }} className="text-center">
 					<h1>{auction.item}</h1>
