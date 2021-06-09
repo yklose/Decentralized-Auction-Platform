@@ -1,4 +1,9 @@
 /build/node_modules
 /build/yarn.lock
+/build/package-lock.json
+/build/contracts
+
 /api/node_modules
+/api/package-lock.json
+
 node_modules
