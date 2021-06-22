@@ -39,6 +39,14 @@
       "sealed": true,
       "img": "holder.js/100px160",
       "id": 5
+    },
+    {
+      "identifier": 2458724329,
+      "item": "Demo Auction",
+      "description": "Demos always work perfectly!",
+      "sealed": false,
+      "img": "",
+      "id": 6
     }
   ]
 }

@@ -19,6 +19,8 @@ const OwnerPage = ({ addAuctionToDB, isConnected, contract, accounts }) => {
 
             // Then, create an auction with the identifier
             // Listen to the events of the promise and log the TX hash and receipt
+            console.log(accounts[0])
+            await contract.methods.get_number_of_auctions().call().then(console.log)
             await contract.methods.deploy_auction(identifier, auction.sealed).send({ from: accounts[0] })
             .on("transactionHash", (hash) => {
               console.log("The transaction hash is:", hash);
