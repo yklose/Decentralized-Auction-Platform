@@ -1,8 +1,7 @@
 const ganache = require('ganache-core');
 const Web3 = require('web3');
 
-var queryable = require('queryable');
-var db = queryable.open('auctionhouse.db');
+var db = require("../storage/storage");
 
 contract = {}
 
@@ -36,7 +35,7 @@ contract.web3.eth.net.getId().then(result=> {
     contract.web3.eth.getAccounts().then(accounts => {
         contract.accounts = accounts;
         //contract.auctionHouse.methods.hashSeriesNumber(1,2).call().then(console.log)
-        contract.auctionHouse.events.ContractCreated(
+        contract.auctionHouse.events.AuctionDeployed(
             {fromBlock: 0},
             function(err, event) {
                 console.log("Event happened: ", event.returnValues);
@@ -45,19 +44,23 @@ contract.web3.eth.net.getId().then(result=> {
                     return;
                 }
                 let identifier = parseInt(event.returnValues.identifier, 10)
+                console.log("Identifier of Event: ", identifier)
                 let createdAuction = db.find({'identifier': identifier});
                 console.log("Found Auctions:", createdAuction)
                 if (createdAuction.length == 0) {
-                    console.log("Event idenfifier " + identifier + " has no locally saved auction (" + createdAuction+ ")... Maybe it was created by another server?")
+                    console.log("Event idenfifier " + identifier + " has no locally saved auction (" + createdAuction+ ")... Maybe it was created by another server? Type of event identifier: " + typeof identifier)
                     return
                 }
-                if (createdAuction.rows[0]['idx'] != 0) {
+                if (createdAuction.rows[0]['idx'] != null) {
                     console.log("Auction already has an id...",createdAuction);
                     return
                 }
-                createdAuction.rows[0]['idx'] = event.idx;
-                console.log("Updating Auction to: ", createdAuction)
-                db.update({'identifier': identifier}, createdAuction);
+                let updatedAuction = createdAuction.rows[0]
+                updatedAuction['idx'] = parseInt(event.returnValues.idx, 10);
+                console.log("Updating Auction to: ", updatedAuction);
+                //db.update({'identifier': identifier}, updatedAuction);
+                db.remove({'identifier': identifier});
+                db.insert(updatedAuction);
                 db.save();
             }
         );
@@ -74,6 +77,13 @@ contract.deploy_auction = function(identifier, sealed) {
 contract.get_id_from_identifier = function(identifier) {
     console.log("Trying to get ID from Idenfifier", identifier);
     return contract.auctionHouse.methods.get_idx_from_identifier(identifier).call({from: contract.accounts[0]});
+}
+
+contract.start_auction = function(idx) {
+    contract.auctionHouse.methods.start_auction(idx).send({from: contract.accounts[0], gas: 1000000, value: 1000000})
+    .then(function(result) {
+        console.log("Auction is started, block=", result.blockNumber);
+    });
 }
 
 module.exports = contract;

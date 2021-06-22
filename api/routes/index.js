@@ -1,8 +1,6 @@
 var express = require('express');
 var router = express.Router();
-
-var queryable = require('queryable');
-var db = queryable.open('auctionhouse.db');
+var db = require("../storage/storage")
 
 var auctionHouse = require("../contracts/auctionHouse");
 
@@ -43,24 +41,42 @@ router.post('/auction/', function(req, res) {
   let newA = req.body;
 
   newA['identifier'] = Math.floor(Math.random() * (Math.pow(2, 32) - 1));
+  newA['started'] = false;
   
   auctionHouse.deploy_auction(newA.identifier, newA.sealed);
-
-  // setTimeout(function() {
-  //   auctionHouse.get_id_from_identifier(newA.identifier).then(id => {
-  //     console.log("Gotten Id! id=", id, "identifier=", newA.identifier);
-  //     newA.id = id;
-  //     db.update({'identifier': id}, newA);
-  //     db.save();
-  //   });
-  // },5000)
 
   db.insert(newA);
   db.save();
   res.status(200).send(db.find({'identifier': newA.identifier}).rows[0]);
 });
 
-/* GET home page. */
+router.post("/auction/:identifier/start", function(req, res) {
+  let identifier = parseInt(req.params.identifier, 10);
+
+  let auctionToStart = db.find({'identifier': identifier});
+  console.log("Found auction to start:", auctionToStart);
+
+  if(auctionToStart.length != 1) {
+    console.log("Auction to start does not have length 1");
+  }
+
+  let updatedAuction = auctionToStart.rows[0];
+  updatedAuction.started = true;
+
+  auctionHouse.start_auction(updatedAuction.idx);
+
+  db.remove({'identifier': identifier});
+  db.insert(updatedAuction);
+  db.save();
+  res.status(200).send(db.find({'identifier': identifier}).rows[0])
+
+});
+
+
+
+/**
+ * Retruns all locally saved stuff in the database
+ */
 router.get('/', function(req, res, next) {
   res.send(db.find().rows)
 });
