@@ -4,3 +4,4 @@
 node_modules
 api/node_modules
 build/node_modules
+api/auctionhouse.db
