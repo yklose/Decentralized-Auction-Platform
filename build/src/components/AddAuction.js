@@ -20,8 +20,8 @@ const AddAuction = ({ onAdd, onClose, show }) => {
             alert("Please make sure that a description and item are specified")
             return
         }
-
-        onAdd({ item, description, img, sealed })
+        onClose();
+        onAdd({ item, description, img, sealed });
     }
 
     return (

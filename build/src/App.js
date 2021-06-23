@@ -3,6 +3,7 @@ import AuctionHouse from './contracts/AuctionHouse.json';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import Web3 from "web3"
 
+import { auctions as temp_auctions } from "./db.json";
 import CustomNavbar from './components/CustomNavbar';
 import { StartPage, LoginPage, Info, BrowseAll, OwnerPage, AuctionPage } from './components/index';
 
@@ -44,24 +45,26 @@ class App extends Component {
 
   fetchAuctionData = async () => {
     // Not implemented yet
-    const res = await fetch('http://localhost:5000/auctions')
+    const res = await fetch('http://localhost:5000/')
     const data = await res.json()
+    console.log("The following data was fetched from the server", data)
+    if(data.length === 0) {
+      return temp_auctions
+    }
     return data
   }
 
-  addAuctionToDB = async ({identifier, item, description, img, sealed}) => {
+  addAuction = async ({item, description, img, sealed}) => {
 
-    const res = await fetch('http://localhost:5000/auctions', {
+    const res = await fetch('http://localhost:5000/auction/', {
       method: 'POST',
       headers: {
         'Content-type': 'application/json',
       },
       body: JSON.stringify({
-        identifier: identifier,
         item: item,
         description: description,
-        sealed: sealed,
-        img: img
+        sealed: sealed
       }),
     })
 
@@ -101,7 +104,7 @@ class App extends Component {
           <LoginPage setupAccount={this.setupAccount} isConnected={this.state.isConnected}/>
         )} />
         <Route path="/owner" render={() => (
-          <OwnerPage {...this.state} addAuctionToDB={this.addAuctionToDB}/>
+          <OwnerPage {...this.state} addAuction={this.addAuction}/>
         )} />
         <Route path="/auctions/:identifier" render={routeProps => (
           <AuctionPage {...this.state} {...routeProps}/>

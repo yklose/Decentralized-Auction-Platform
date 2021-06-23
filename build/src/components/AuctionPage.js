@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import { run as runHolder } from 'holderjs/holder';
-import { Container, Row, Col, Image, Button } from 'react-bootstrap';
+import { Container, Row, Col, Image, Button, Alert } from 'react-bootstrap';
 
-import { FaEthereum } from "react-icons/fa";
 import { Card } from 'react-bootstrap'
 
 const ether = 10**18;
@@ -16,6 +15,8 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 	const [highestBid, setHighestBid] = useState("Please connect with a wallet to see the highest bid")
 	const [owner, setOwner] = useState("Please connect with a wallet to see the Owner")
 	const [endtime, setEndtime] = useState("Please connect with a wallet to see the endtime")
+	const [canBid, setCanBid] = useState(false)
+	const [idx, setIdx] = useState(undefined)
 
 	useEffect(() => {
 
@@ -36,28 +37,30 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 				setAuction({item: "Unnamed auction", description: "Unnamed Artist", img: "holder.js/500x500", sealed: false})
 			}
 		}
-
-		const fetch_auction_bid = async (identifier) => {
-			if(isConnected && Object.keys(contract).length !== 0) {
-				console.log(identifier)
-				let highest = await contract.methods.get_highest_bid(identifier).call();
-				let endtime = await contract.methods.get_endtime(identifier).call();
-				let owner = await contract.methods.get_owner(identifier).call();
-				setHighestBid(highest[0]);
-				setOwner(owner[0]);
-				setEndtime(endtime[0]);
-			} else {
-				setHighestBid("Please connect with a wallet to see the bid")
-				setOwner("Please connect with a wallet to see the owner")
-				setEndtime("Please connect with a wallet to see the partner")
-			}
-		}
 		
 		fetch_auction_data(parseInt(match.params.identifier))
 		fetch_auction_idx(match.params.identifier)
+
 		runHolder("auction-holder-image")
 
-	}, [match, auctions, contract, isConnected])
+	}, [match, auctions, contract, isConnected, accounts])
+
+	const fetch_auction_bid = async (identifier) => {
+		if(isConnected && Object.keys(contract).length !== 0) {
+			setIdx(identifier)
+			console.log("Auction identifier:", identifier)
+			let highest = await contract.methods.get_highest_bid(identifier).call();
+			let endtime = await contract.methods.get_endtime(identifier).call();
+			let owner = await contract.methods.get_owner(identifier).call();
+			let deposit = await contract.methods.get_deposit_balance(identifier).call({ from: accounts[0] });
+			console.log(deposit)
+			setCanBid(parseInt(deposit) >= 5*ether);
+			console.log(canBid)
+			setHighestBid(highest[0]);
+			setOwner(owner[0]);
+			setEndtime(endtime[0]);
+		}
+	}
 
 	const setBid = async () => {
 		// Function can only be executed properly if an account is connected
@@ -72,7 +75,27 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 				  console.log("Here is the receipt:", receipt);
 				});
 				// Set the new Partner
-				setEndtime(accounts[0])
+				fetch_auction_bid(idx)
+			} catch(error) {
+				const msg = JSON.parse(error.message.split("'")[1]);
+				console.log(msg.value.data.message)
+				alert(msg.value.data.message)
+			}
+		}
+	}
+
+	const deposit_money = async () => {
+		if(idx !== undefined) {
+			try {
+				await contract.methods.deposit_money(idx).send({ from: accounts[0], value: 5*ether })
+				.on("transactionHash", (hash) => {
+					console.log("The transaction hash is:", hash);
+				})
+				.on("receipt", (receipt) => {
+					console.log("Here is the receipt:", receipt);
+				});
+				// User is now able to 
+				setCanBid(true)
 			} catch(error) {
 				const msg = JSON.parse(error.message.split("'")[1]);
 				console.log(msg.value.data.message)
@@ -98,10 +121,21 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 							<p>{"Highest Bid: " + highestBid}</p>
 							<p>{"Owner: " + owner}</p>
 							<p>{"Endtime: " + endtime}</p>
-							<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
-								onClick={setBid} disabled={!isConnected && accounts[0] !== owner}>
-								Set a bid
-							</Button>							
+							<hr />
+							{canBid ? (
+								<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
+									onClick={setBid} disabled={!isConnected && accounts[0] !== owner}>
+									Set a bid
+								</Button>
+							) : ( <>
+								<Alert variant="warning" style={{width: "fit-content", margin: "1rem auto"}}>
+									In order to participate you need a security deposit!
+								</Alert>
+								<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
+									onClick={deposit_money} disabled={!isConnected && accounts[0] !== owner}>
+										Deposit Money
+								</Button>
+							</> )}							
 						</Card.Body>
 						
 					</Card>

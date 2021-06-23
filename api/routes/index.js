@@ -32,7 +32,6 @@ function requireJsonKeys(jsonObject, keys) {
  *  'sealed' true or false if this should be a sealed bid
  */
 router.post('/auction/', function(req, res) {
-  console.log("Hello")
   if (!requireJsonKeys(req.body, auctionKeys)) {
     res.status(400).send({
       'msg': "The auction cannot be saved because it is missing keys",

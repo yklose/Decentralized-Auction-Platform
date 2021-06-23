@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { run as runHolder } from 'holderjs/holder';
-import { Card, Button } from 'react-bootstrap'
 import { Link } from 'react-router-dom';
 
 // Component which displays one single items - to be expanded
@@ -13,17 +12,19 @@ const Item = ({ identifier, item, description, img }) => {
   })
 
   return (
-    <Card border="secondary" style={{height: "100%"}}>
-      <Card.Img variant="top" src={img} className="item-holder-img"/>
-      <Card.Body className="text-center">
-        <h4>{item}</h4>
-        <h5>{description}</h5>
-        <Link to={"/auctions/"+identifier}>
-          <Button variant="outline-secondary">Details</Button>
+    <div className="custom-card" style={{backgroundImage:`url(${img})`}}>
+      <div className="custom-card-content"> 
+        <h3 className="custom-card-title">
+          {item}
+        </h3>
+        <p className="custom-card-body">
+          {description}
+        </p>
+        <Link to={"/auctions/"+identifier} className="custom-card-link">
+          Details
         </Link>
-      </Card.Body>
-    </Card>
-
+      </div>
+    </div>
   )
 }
 
