@@ -14,20 +14,19 @@ contract AuctionHouse {
         mapping (address => uint) bids;
     }
 
-    Auction[] auctions;
+    Auction[] public auctions;
 
     uint256 interval = 8; 
     
     // define events
     event DepositEvent(address indexed sender, uint value, uint256 idx);
     event AuctionDeployed(address indexed owner, uint256 idx, uint256 identifier, bool sealed_auction);
-    event OpenBidEvent(address indexed sender, uint value, uint256 idx);
-    event SealedBidEvent(address indexed sender, uint256 idx);
+    event BidEvent(address indexed sender, uint value, uint256 idx);
 
 
     function hashSeriesNumber(uint256 nonce, uint256 number) public pure returns (uint) {
         // hash the value of a string and number 
-        return uint256(keccak256(abi.encode(number, nonce)));
+        return uint256(keccak256(abi.encodePacked(number, nonce)));
     }
 
     function get_owner(uint idx) public view returns (address){
@@ -125,12 +124,12 @@ contract AuctionHouse {
 
         if (auctions[idx].sealed_auction == true){
             auctions[idx].bids[msg.sender] = bid_value;
-            emit SealedBidEvent(msg.sender, idx);
+            emit BidEvent(msg.sender, bid_value, idx);
         }
         else{
             require(bid_value > auctions[idx].bids[msg.sender], "ERROR: Bids have to be higher than previous bids (open auction)");
             auctions[idx].bids[msg.sender] = bid_value;
-            emit OpenBidEvent(msg.sender, bid_value, idx);
+            emit BidEvent(msg.sender, bid_value, idx);
         }
     }
 

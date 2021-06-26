@@ -7,7 +7,7 @@ contract = {}
 
 //contract.web3 = new Web3(ganache.provider());
 const provider = new Web3.providers.WebsocketProvider(
-    "ws://127.0.0.1:8545"
+    "ws://127.0.0.1:7545"
   );
 contract.web3 = new Web3(provider);
 
@@ -34,6 +34,8 @@ contract.web3.eth.net.getId().then(result=> {
     // Get local accounts, use first one. Listen to events for this account
     contract.web3.eth.getAccounts().then(accounts => {
         contract.accounts = accounts;
+        //console.dir(contract.auctionHouse)
+        //console.dir(contract.auctionHouse)
         //contract.auctionHouse.methods.hashSeriesNumber(1,2).call().then(console.log)
         contract.auctionHouse.events.AuctionDeployed(
             {fromBlock: 0},
@@ -61,6 +63,30 @@ contract.web3.eth.net.getId().then(result=> {
                 //db.update({'identifier': identifier}, updatedAuction);
                 db.remove({'identifier': identifier});
                 db.insert(updatedAuction);
+                db.save();
+            }
+        );
+
+        contract.auctionHouse.events.BidEvent(
+            {fromBlock: 0},
+            function(err, event) {
+                console.log("Event happened: ", event.returnValues);
+                if (err != null) {
+                    console.error("Event error: ", err);
+                    return;
+                }
+                let identifier = parseInt(event.returnValues.identifier, 10)
+                let biddedAuction = db.find({'identifier': identifier}).rows[0];
+
+                // Logic here
+                if (!("latest_bids" in biddedAuction)) {
+                    biddedAuction['latest_bids'] = {}
+                }
+
+                biddedAuction['latest_bids'][event.returnValues.sender] = parseInt(event.returnValues.value, 10)
+
+                db.remove({'identifier': identifier});
+                db.insert(biddedAuction);
                 db.save();
             }
         );
