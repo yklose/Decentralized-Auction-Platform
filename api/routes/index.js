@@ -124,7 +124,11 @@ router.post("/auction/:identifier/unseal", function(req, res) {
     auctionToUnseal['revealed_bids'] = {}
   }
 
-  auctionToUnseal['revealed_bids'][addr] = bid;
+  auctionToUnseal['revealed_bids'][addr] = {
+    'bid': bid,
+    'nonce': nonce,
+    'hash': hash
+  };
 
   let unsealed_amount = Object.keys(auctionToUnseal['revealed_bids']).length
   let sealed_amount = Object.keys(auctionToUnseal['latest_bids']).length
@@ -161,7 +165,7 @@ router.post("/auction/:identifier/endOpen", function(req, res) {
   let auctionToEnd = db.find({'identifier': identifier}).rows[0];
   console.log("Found auction to end:", auctionToEnd);
 
-  contract.auctionHouse.methods.get_winner(idx).call(function (err, res) {
+  contract.auctionHouse.methods.get_winner(idx).call(function (err, cres) {
     if (err != null) {
       res.status(400).send({
         'msg': "The auction has not ended yet??",
@@ -170,9 +174,9 @@ router.post("/auction/:identifier/endOpen", function(req, res) {
       return
     }
       console.log("GetWinner has returned:")
-      console.dir(res)
-      let winner = res[0] // TODO
-      let winner_bid = res[1] // TODO
+      console.dir(cres)
+      let winner = cres.winner // TODO
+      let winner_bid = cres.bid // TODO
 
       auctionToEnd['finished'] = true
       auctionToEnd['winner'] = winner

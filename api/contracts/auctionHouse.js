@@ -37,29 +37,30 @@ contract.web3.eth.net.getId().then(result=> {
         //console.dir(contract.auctionHouse)
         //console.dir(contract.auctionHouse)
         //contract.auctionHouse.methods.hashSeriesNumber(1,2).call().then(console.log)
+        //TODO: If no auction has been deployed, delete all saved auctions - for sync reasons
         contract.auctionHouse.events.AuctionDeployed(
             {fromBlock: 0},
             function(err, event) {
-                console.log("Event happened: ", event.returnValues);
+                //console.log("Event happened: ", event.returnValues);
                 if (err != null) {
-                    console.error("Event error: ", err);
+                    //console.error("Event error: ", err);
                     return;
                 }
                 let identifier = parseInt(event.returnValues.identifier, 10)
-                console.log("Identifier of Event: ", identifier)
+                //console.log("Identifier of Event: ", identifier)
                 let createdAuction = db.find({'identifier': identifier});
-                console.log("Found Auctions:", createdAuction)
+                //console.log("Found Auctions:", createdAuction)
                 if (createdAuction.length == 0) {
-                    console.log("Event idenfifier " + identifier + " has no locally saved auction (" + createdAuction+ ")... Maybe it was created by another server? Type of event identifier: " + typeof identifier)
+                    //console.log("Event idenfifier " + identifier + " has no locally saved auction (" + createdAuction+ ")... Maybe it was created by another server? Type of event identifier: " + typeof identifier)
                     return
                 }
                 if (createdAuction.rows[0]['idx'] != null) {
-                    console.log("Auction already has an id...",createdAuction);
+                    //console.log("Auction already has an id...",createdAuction);
                     return
                 }
                 let updatedAuction = createdAuction.rows[0]
                 updatedAuction['idx'] = parseInt(event.returnValues.idx, 10);
-                console.log("Updating Auction to: ", updatedAuction);
+                //console.log("Updating Auction to: ", updatedAuction);
                 //db.update({'identifier': identifier}, updatedAuction);
                 db.remove({'identifier': identifier});
                 db.insert(updatedAuction);
@@ -75,8 +76,8 @@ contract.web3.eth.net.getId().then(result=> {
                     console.error("Event error: ", err);
                     return;
                 }
-                let identifier = parseInt(event.returnValues.identifier, 10)
-                let biddedAuction = db.find({'identifier': identifier}).rows[0];
+                let idx = parseInt(event.returnValues.idx, 10)
+                let biddedAuction = db.find({'idx': idx}).rows[0];
 
                 // Logic here
                 if (!("latest_bids" in biddedAuction)) {
@@ -85,7 +86,7 @@ contract.web3.eth.net.getId().then(result=> {
 
                 biddedAuction['latest_bids'][event.returnValues.sender] = parseInt(event.returnValues.value, 10)
 
-                db.remove({'identifier': identifier});
+                db.remove({'idx': idx});
                 db.insert(biddedAuction);
                 db.save();
             }

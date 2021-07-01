@@ -34,11 +34,6 @@ contract AuctionHouse {
         return auctions[idx].owner;
     }
 
-    function is_active(uint idx) public view returns (bool){
-        // returns whether the auction is active 
-        return auctions[idx].active;
-    }
-
     function is_owner(address addr, uint idx) public view returns (bool){
         // returns true/false of an address with idx
         if (addr == auctions[idx].owner){
@@ -91,7 +86,8 @@ contract AuctionHouse {
         uint idx = auctions.length;
         auctions.push();
         Auction storage new_auct = auctions[idx];
-        new_auct.endtime = block.number + interval;
+        // Changed by Max
+        new_auct.endtime = 0;
         new_auct.owner = msg.sender;
         new_auct.sealed_auction = type_sealed;
         new_auct.auction_identifier = identifier;
@@ -177,7 +173,7 @@ contract AuctionHouse {
         }
     }    
 
-    function get_winner(uint idx) public view returns (address, uint) {
+    function get_winner(uint idx) public view returns (address winner, uint bid) {
         // gets the winner in an open price auction
         require(auctions[idx].endtime <= block.number, "ERROR: Get winner can only be called when auction is over");
         require(auctions[idx].sealed_auction == false, "ERROR: The function get winner can only be called on open auctions.");

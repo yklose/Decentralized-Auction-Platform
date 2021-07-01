@@ -8,22 +8,23 @@ import { Card } from 'react-bootstrap'
 
 const ether = 10**18;
 
-const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
+const AuctionPage = ({ web3, auctions, contract, match, accounts }) => {
 	// items - Array with all the items to display
 	//NOTE: Currently only a placeholder item is displayed
 	const [auction, setAuction] = useState({})
 	const [highestBid, setHighestBid] = useState("Please connect with a wallet to see the highest bid")
-	const [endtime, setEndtime] = useState("Please connect with a wallet to see the highest bid")
+	const [endtime, setEndtime] = useState("Please connect with a wallet to see the Endtime")
 	const [canBid, setCanBid] = useState(false)
 	const [idx, setIdx] = useState(undefined)
 	const [userBid, setUserBid] = useState(0)
 	const [isActive, setIsActive] = useState(false)
+	const [doUpdate, setdoUpdate] = useState(0)
 
 	useEffect(() => {
 
 		const fetch_auction_idx = async (identifier) => {
 			let idx = [undefined];
-			if(isConnected && Object.keys(contract).length !== 0) {
+			if(accounts[0] !== null && Object.keys(contract).length !== 0) {
 				idx = await contract.methods.get_idx_from_identifier(identifier).call();
 				fetch_auction_bid(idx)
 			}
@@ -43,33 +44,48 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 
 			setIdx(identifier)
 			console.log("Auction identifier:", identifier)
-			await contract.methods.get_highest_bid(identifier).call().then((result) => setHighestBid(result[0]));
-			await contract.methods.get_endtime(identifier).call().then((result) => setEndtime(result));
-			await contract.methods.is_active(identifier).call().then((result) => setIsActive(result));
-			let deposit = await contract.methods.get_deposit_balance(identifier).call({ from: accounts[0] });
-			setCanBid(parseInt(deposit) >= 5*ether);
+			await contract.methods.get_highest_bid(identifier).call()
+			.then((bid) => setHighestBid(bid));
+
+			const end = await contract.methods.get_endtime(identifier).call()
+			setEndtime(end)
+
+			await web3.eth.getBlockNumber()
+			.then((blockNumber) => setIsActive((blockNumber < end) && (end !== 0)))
+
+			await contract.methods.get_deposit_balance(identifier).call({ from: accounts[0] })
+			.then((deposit) => setCanBid(parseInt(deposit) >= 5*ether));
 		}
-		
+		if(web3 !== null) {
+			web3.eth.getBlockNumber().then(console.log);
+		}
 		fetch_auction_data(parseInt(match.params.identifier))
 		fetch_auction_idx(match.params.identifier)
 
 		runHolder("auction-holder-image")
 
-	}, [match, auctions, contract, isConnected, accounts])
+	}, [match, auctions, contract, accounts, web3, doUpdate])
 
 	const setBid = async () => {
 		// Function can only be executed properly if an account is connected
-		if(isConnected && Object.keys(contract).length !== 0) {
+		if(accounts[0] !== null && Object.keys(contract).length !== 0) {
 			try {
-				console.log(userBid)
 				// Send the transaction to the smart contract and log the transaction
 				await contract.methods.set_bid(idx, userBid).send({ from: accounts[0] })
-				.on("transactionHash", (hash) => {
+				.on("transactionHash", async (hash) => {
 				  console.log("The transaction hash is:", hash);
+				  if(hash.blockNumber > endtime+1) {
+					  setIsActive(false);
+					  var res = await fetch(`http://localhost:5000/auction/${match.params.identifier}/endOpen`, {method:"POST"})
+					  res.json().then(console.log)
+				  }
 				})
 				.on("receipt", (receipt) => {
 				  console.log("Here is the receipt:", receipt);
 				});
+				await contract.methods.get_highest_bid(idx).call()
+				.then((result) => setHighestBid(result))
+
 			} catch(error) {
 				const msg = JSON.parse(error.message.split("'")[1]);
 				console.log(msg.value.data.message)
@@ -99,9 +115,15 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 	}
 
 	const startAuction = async () => {
-		const res = await fetch(`http://localhost:5000/${idx}/start`)
-		const data = await res.json()
-		console.log("The following auction was started", data)
+		contract.methods.get_winner(idx).call().then(console.log)
+		var res = await fetch(`http://localhost:5000/auction/${match.params.identifier}/endOpen`, {method:"POST"})
+		res.json().then(console.log)
+		// var res = await fetch(`http://localhost:5000/auction/${match.params.identifier}/start`, {method:"POST"})
+		// res.json()
+		// .then((res) => {
+		// 	console.log("The following auction was started", res)
+		// 	setdoUpdate(res.identifier)
+		// });
 	}
 
 	return (
@@ -122,8 +144,13 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 						<Card.Header>Bidding information</Card.Header>
 						<Card.Body>
 							<p>{"Highest Bid: " + highestBid}</p>
-							<p>{"Endtime: " + (isActive ? "Not started" : endtime)}</p>
+							<p>{"Endtime: " + (isActive ? endtime : "Not started")}</p>
 							<hr />
+							{isActive ? (<></>) : (
+								<Alert variant="warning" style={{width: "80%", margin: "1rem auto"}} dismissible>
+									This auction hasn't started yet
+								</Alert>
+							)}
 							{canBid ? ( <Row className="center-items">
 								<InputGroup style={{width: "30%"}}>
 									<FormControl placeholder="Bid" size="lg" onChange={(e) => setUserBid(e.target.value)}/>
@@ -132,15 +159,15 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 									</InputGroup.Append>
 								</InputGroup>
 								<Button style={{width: "50%", marginLeft: "1em" }} variant="outline-secondary" size="lg" 
-									onClick={setBid} disabled={!isConnected}>
+									onClick={setBid} disabled={accounts[0] === null}>
 									Set a bid
 								</Button>
 							</Row>) : ( <>
-								<Alert variant="warning" style={{width: "fit-content", margin: "1rem auto"}}>
+								<Alert variant="warning" style={{width: "80%", margin: "1rem auto"}}>
 									In order to participate you need a security deposit!
 								</Alert>
 								<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
-									onClick={deposit_money} disabled={!isConnected}>
+									onClick={deposit_money} disabled={accounts[0] === null}>
 										Deposit Money
 								</Button>
 							</> )}							

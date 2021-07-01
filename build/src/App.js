@@ -66,10 +66,10 @@ class App extends Component {
         description: description,
         sealed: sealed
       }),
-    })
+    });
 
-    const data = await res.json()
-    this.setState({ auctions: [...this.state.auctions, data] })
+    const data = await res.json();
+    this.setState({ auctions: [...this.state.auctions, data] });
   }
 
   componentDidMount = async () => {
