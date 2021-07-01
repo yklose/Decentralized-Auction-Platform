@@ -3,13 +3,13 @@ import AuctionHouse from './contracts/AuctionHouse.json';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import Web3 from "web3"
 
-import { auctions as temp_auctions } from "./db.json";
 import CustomNavbar from './components/CustomNavbar';
 import { StartPage, LoginPage, Info, BrowseAll, OwnerPage, AuctionPage } from './components/index';
 
 class App extends Component {
   state = { 
     web3: null, 
+    web3Socket: null,
     accounts: [null], 
     contract: {}, 
     isConnected: false,
@@ -30,9 +30,12 @@ class App extends Component {
       const networkId = await web3.eth.net.getId();
       const deployedNetwork = AuctionHouse.networks[networkId];
       const instance = new web3.eth.Contract(AuctionHouse.abi, deployedNetwork && deployedNetwork.address);
+
+      let web3Socket = new Web3(new Web3.providers.WebsocketProvider("ws://127.0.0.1:7545"));
+      const contractSocket = new web3Socket.eth.Contract(AuctionHouse.abi, deployedNetwork && deployedNetwork.address)
       
       // Set web3, accounts, and contract to the state
-      this.setState({ web3, accounts, contract: instance, isConnected: true });
+      this.setState({ web3, accounts, contract: instance, contractSocket, isConnected: true });
       sessionStorage.setItem("accounts", accounts);
       return true;
 
@@ -48,10 +51,7 @@ class App extends Component {
     const res = await fetch('http://localhost:5000/')
     const data = await res.json()
     console.log("The following data was fetched from the server", data)
-    if(data.length === 0) {
-      return temp_auctions
-    }
-    return data
+    this.setState({ auctions: data })
   }
 
   addAuction = async ({item, description, img, sealed}) => {
@@ -68,15 +68,12 @@ class App extends Component {
       }),
     });
 
-    const data = await res.json();
-    this.setState({ auctions: [...this.state.auctions, data] });
+    res.json().then(this.fetchAuctionData());
   }
 
   componentDidMount = async () => {
     // Fetch Exhibit Data from Endpoint
-    await this.fetchAuctionData().then((auctions_data) => {
-      this.setState({ auctions: auctions_data });
-    })
+    this.fetchAuctionData()
 
     // Get accounts from session storage
     const accounts = sessionStorage.getItem("accounts")

@@ -16,13 +16,12 @@ contract AuctionHouse {
 
     Auction[] public auctions;
 
-    uint256 interval = 8; 
+    uint256 interval = 3; 
     
     // define events
     event DepositEvent(address indexed sender, uint value, uint256 idx);
     event AuctionDeployed(address indexed owner, uint256 idx, uint256 identifier, bool sealed_auction);
-    event BidEvent(address indexed sender, uint value, uint256 idx);
-
+    event BidEvent(address indexed sender, uint256 indexed idx, uint indexed blockNr, uint value);
 
     function hashSeriesNumber(uint256 nonce, uint256 number) public pure returns (uint) {
         // hash the value of a string and number 
@@ -56,7 +55,7 @@ contract AuctionHouse {
 
     function get_idx_from_identifier(uint identifier) public view returns (uint){
         // get the id of an auction given an identifier
-        require(identifier_is_unused(identifier)==false, "ERROR: Identifier is already used");
+        require(!identifier_is_unused(identifier), "ERROR: Identifier does not exist");
         for (uint256 idx = 0; idx < auctions.length; idx++) {
             if (auctions[idx].auction_identifier == identifier){
                 return idx;
@@ -121,17 +120,16 @@ contract AuctionHouse {
         require(auctions[idx].active, "ERROR: The auction has to be started (active)");
         require(msg.sender != auctions[idx].owner, "ERROR: The owner can not bid on his/her auction");
         require(auctions[idx].deposit[msg.sender]>=5 ether, "ERROR: Deposit is not enough (at least 5 ETH)");
-        require(auctions[idx].endtime > create_timestamp(), "ERROR: Auction is already over (Block limit reached)");
+        require(auctions[idx].endtime >= create_timestamp(), "ERROR: Auction is already over (Block limit reached)");
 
         if (auctions[idx].sealed_auction == true){
             auctions[idx].bids[msg.sender] = bid_value;
-            emit BidEvent(msg.sender, bid_value, idx);
         }
         else{
             require(bid_value > auctions[idx].bids[msg.sender], "ERROR: Bids have to be higher than previous bids (open auction)");
             auctions[idx].bids[msg.sender] = bid_value;
-            emit BidEvent(msg.sender, bid_value, idx);
         }
+        emit BidEvent(msg.sender, idx, block.number, bid_value);
     }
 
     function get_bid(uint idx) public view returns (uint){
@@ -191,6 +189,7 @@ contract AuctionHouse {
 
     function refund_deposit(uint idx) public {
         // refund the deposit if action is not active or if time is over
+        require(auctions[idx].deposit[msg.sender] > 0, "ERROR: The Sender does not have any deposit");
         require(auctions[idx].active == false || auctions[idx].endtime < block.number, "ERROR: Refund is only possible after the auction is over or before the auction has started.");
         payable(msg.sender).transfer(auctions[idx].deposit[msg.sender]);
         auctions[idx].deposit[msg.sender] = 0;

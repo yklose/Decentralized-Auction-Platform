@@ -14,9 +14,7 @@ const BrowseAll = ({ auctions }) => {
                 <FormControl style={{color: "gray", width: "15%"}} type="text" placeholder="Explore"/>
             </Row>
             <hr style={{marginTop: "0.5rem"}}/>
-            <Row>
-                <Items items={auctions}/>
-            </Row>
+            <Items items={auctions}/>
         </Container>
     )
 }

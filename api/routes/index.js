@@ -71,7 +71,7 @@ router.post("/auction/:identifier/start", function(req, res) {
   let updatedAuction = auctionToStart.rows[0];
   updatedAuction.started = true;
 
-  auctionHouse.start_auction(updatedAuction.idx);
+  auctionHouse.start_auction(updatedAuction.idx)
 
   db.remove({'identifier': identifier});
   db.insert(updatedAuction);
@@ -165,7 +165,8 @@ router.post("/auction/:identifier/endOpen", function(req, res) {
   let auctionToEnd = db.find({'identifier': identifier}).rows[0];
   console.log("Found auction to end:", auctionToEnd);
 
-  contract.auctionHouse.methods.get_winner(idx).call(function (err, cres) {
+  contract.auctionHouse.methods.get_winner(idx).call()
+  .then((err, cres) => {
     if (err != null) {
       res.status(400).send({
         'msg': "The auction has not ended yet??",
