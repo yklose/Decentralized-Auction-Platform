@@ -8,6 +8,7 @@ router.use(cors())
 var auctionHouse = require("../contracts/auctionHouse");
 
 let auctionKeys = ['item', 'description', 'sealed'];
+let unsealKeys = ['nonce', 'bid', 'address'];
 /**
  * Used to check whether the passed json has the necessary keys
  * @param jsonObject the object that should have the keys
@@ -45,6 +46,7 @@ router.post('/auction/', function(req, res) {
 
   newA['identifier'] = Math.floor(Math.random() * (Math.pow(2, 32) - 1));
   newA['started'] = false;
+  newA['finished'] = false;
   
   auctionHouse.deploy_auction(newA.identifier, newA.sealed);
 
@@ -53,6 +55,9 @@ router.post('/auction/', function(req, res) {
   res.status(200).send(db.find({'identifier': newA.identifier}).rows[0]);
 });
 
+/**
+ * Start the auction, this expects no parameters
+ */
 router.post("/auction/:identifier/start", function(req, res) {
   let identifier = parseInt(req.params.identifier, 10);
 
@@ -75,8 +80,111 @@ router.post("/auction/:identifier/start", function(req, res) {
 
 });
 
+/**
+ * This stores the bids of different participants
+ * body:
+ * 'address'
+ * 'nonce'
+ * 'bid'
+ */
+router.post("/auction/:identifier/unseal", function(req, res) {
+  if (!requireJsonKeys(req.body, unsealKeys)) {
+    res.status(400).send({
+      'msg': "The bid cannot be unsealed because it is missing keys",
+      'provided': req.body,
+      'required': unsealKeys
+    })
+    return
+  }
+  let identifier = parseInt(req.params.identifier, 10);
+
+  let auctionToUnseal = db.find({'identifier': identifier}).rows[0];
+  console.log("Found auction to unseal:", auctionToUnseal);
+
+  // Logic here
+  // acutally check the bid here, this is a very important step!! :)
+  let addr = req.params.address;
+  let nonce = parseInt(req.params.nonce, 10);
+  let bid = parseInt(req.params.bid, 10);
+  let hash = auctionHouse.web3.utils.soliditySha3(bid, nonce);
+
+  if(auctionToUnseal['latest_bids'][addr] != hash) {
+    res.status(400).send({
+      'msg': "The Hash and calculated hash from the stored input dont match!",
+      'stored_hash': auctionToUnseal['latest_bids'][addr],
+      'calculated_hash': hash,
+      'addr': addr,
+      'nonce': nonce,
+      'bid': bid,
+    })
+    return
+  }
+
+  if (!('revealed_bids' in auctionToUnseal)) {
+    auctionToUnseal['revealed_bids'] = {}
+  }
+
+  auctionToUnseal['revealed_bids'][addr] = bid;
+
+  let unsealed_amount = Object.keys(auctionToUnseal['revealed_bids']).length
+  let sealed_amount = Object.keys(auctionToUnseal['latest_bids']).length
+
+  if (unsealed_amount == sealed_amount) {
+    auctionToUnseal['finished'] = true;
+
+    // Now calculate the winner
+    let maxBid = -1;
+    let maxAddr = -1;
+    for (key in Object.keys(auctionToUnseal['revealed_bids'])) {
+        if (auctionToUnseal['revealed_bids'][key] > maxBid) {
+          maxBid = auctionToUnseal['revealed_bids'][key]
+          maxAddr = key
+        }
+    }
+
+    auctionToUnseal['winner'] = maxAddr;
+    auctionToUnseal['winner_bid'] = maxBid;
+  }
+
+  db.remove({'identifier': identifier});
+  db.insert(auctionToUnseal);
+  db.save();
+
+  res.status(200).send(db.find({'identifier': identifier}).rows[0])
+
+});
 
 
+router.post("/auction/:identifier/endOpen", function(req, res) {
+  let identifier = parseInt(req.params.identifier, 10);
+
+  let auctionToEnd = db.find({'identifier': identifier}).rows[0];
+  console.log("Found auction to end:", auctionToEnd);
+
+  contract.auctionHouse.methods.get_winner(idx).call(function (err, res) {
+    if (err != null) {
+      res.status(400).send({
+        'msg': "The auction has not ended yet??",
+        'err': err,
+      })
+      return
+    }
+      console.log("GetWinner has returned:")
+      console.dir(res)
+      let winner = res[0] // TODO
+      let winner_bid = res[1] // TODO
+
+      auctionToEnd['finished'] = true
+      auctionToEnd['winner'] = winner
+      auctionToEnd['winner_bid'] = winner_bid
+
+      db.remove({'identifier': identifier});
+      db.insert(auctionToEnd);
+      db.save();
+      res.status(200).send(db.find({'identifier': identifier}).rows[0])
+      return
+  })
+});
 /**
  * Retruns all locally saved stuff in the database
  */
