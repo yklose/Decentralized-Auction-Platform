@@ -35,6 +35,11 @@ contract AuctionHouse {
         return auctions[idx].owner;
     }
 
+    function is_active(uint idx) public view returns (bool){
+        // returns whether the auction is active 
+        return auctions[idx].active;
+    }
+
     function is_owner(address addr, uint idx) public view returns (bool){
         // returns true/false of an address with idx
         if (addr == auctions[idx].owner){

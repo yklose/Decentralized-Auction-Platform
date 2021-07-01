@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import { run as runHolder } from 'holderjs/holder';
-import { Container, Row, Col, Image, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Image, Button, Alert, FormControl, InputGroup } from 'react-bootstrap';
 
 import { Card } from 'react-bootstrap'
 
@@ -13,10 +13,11 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 	//NOTE: Currently only a placeholder item is displayed
 	const [auction, setAuction] = useState({})
 	const [highestBid, setHighestBid] = useState("Please connect with a wallet to see the highest bid")
-	const [owner, setOwner] = useState("Please connect with a wallet to see the Owner")
-	const [endtime, setEndtime] = useState("Please connect with a wallet to see the endtime")
+	const [endtime, setEndtime] = useState("Please connect with a wallet to see the highest bid")
 	const [canBid, setCanBid] = useState(false)
 	const [idx, setIdx] = useState(undefined)
+	const [userBid, setUserBid] = useState(0)
+	const [isActive, setIsActive] = useState(false)
 
 	useEffect(() => {
 
@@ -37,6 +38,17 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 				setAuction({item: "Unnamed auction", description: "Unnamed Artist", img: "holder.js/500x500", sealed: false})
 			}
 		}
+
+		const fetch_auction_bid = async (identifier) => {
+
+			setIdx(identifier)
+			console.log("Auction identifier:", identifier)
+			await contract.methods.get_highest_bid(identifier).call().then((result) => setHighestBid(result[0]));
+			await contract.methods.get_endtime(identifier).call().then((result) => setEndtime(result));
+			await contract.methods.is_active(identifier).call().then((result) => setIsActive(result));
+			let deposit = await contract.methods.get_deposit_balance(identifier).call({ from: accounts[0] });
+			setCanBid(parseInt(deposit) >= 5*ether);
+		}
 		
 		fetch_auction_data(parseInt(match.params.identifier))
 		fetch_auction_idx(match.params.identifier)
@@ -45,37 +57,19 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 
 	}, [match, auctions, contract, isConnected, accounts])
 
-	const fetch_auction_bid = async (identifier) => {
-		if(isConnected && Object.keys(contract).length !== 0) {
-			setIdx(identifier)
-			console.log("Auction identifier:", identifier)
-			let highest = await contract.methods.get_highest_bid(identifier).call();
-			let endtime = await contract.methods.get_endtime(identifier).call();
-			let owner = await contract.methods.get_owner(identifier).call();
-			let deposit = await contract.methods.get_deposit_balance(identifier).call({ from: accounts[0] });
-			console.log(deposit)
-			setCanBid(parseInt(deposit) >= 5*ether);
-			console.log(canBid)
-			setHighestBid(highest[0]);
-			setOwner(owner[0]);
-			setEndtime(endtime[0]);
-		}
-	}
-
 	const setBid = async () => {
 		// Function can only be executed properly if an account is connected
 		if(isConnected && Object.keys(contract).length !== 0) {
 			try {
+				console.log(userBid)
 				// Send the transaction to the smart contract and log the transaction
-				await contract.methods.rentPartnership(match.params.identifier).send({ from: accounts[0], value: 1 })
+				await contract.methods.set_bid(idx, userBid).send({ from: accounts[0] })
 				.on("transactionHash", (hash) => {
 				  console.log("The transaction hash is:", hash);
 				})
 				.on("receipt", (receipt) => {
 				  console.log("Here is the receipt:", receipt);
 				});
-				// Set the new Partner
-				fetch_auction_bid(idx)
 			} catch(error) {
 				const msg = JSON.parse(error.message.split("'")[1]);
 				console.log(msg.value.data.message)
@@ -104,8 +98,17 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 		}
 	}
 
+	const startAuction = async () => {
+		const res = await fetch(`http://localhost:5000/${idx}/start`)
+		const data = await res.json()
+		console.log("The following auction was started", data)
+	}
+
 	return (
 		<Container style={{ maxWidth: "90%", marginTop: "1rem" }}>
+			<Button style={{position: "absolute", left: 0, top: "4em", backgroundColor: "white", border: "none"}}
+				onClick={startAuction}>
+				Start Auction</Button>
 			<Row>
 				<Col xs="6" className="center-items">
 					<Image src={auction.img === undefined ? "holder.js/100px160" : auction.img} className="auction-holder-image" rounded style={{margin: "auto"}} />
@@ -115,24 +118,29 @@ const AuctionPage = ({ auctions, isConnected, contract, match, accounts }) => {
 					<h5 style={{marginTop: "2rem"}}>{auction.description}</h5>
 					<h2 style={{marginBottom: "2rem"}}>{auction.sealed ? "This is a sealed auction" : "This is an open auction" }</h2>
 
-					<Card border="success" className="center-items">
+					<Card border={isActive ? "success" : "danger" } className="center-items">
 						<Card.Header>Bidding information</Card.Header>
 						<Card.Body>
 							<p>{"Highest Bid: " + highestBid}</p>
-							<p>{"Owner: " + owner}</p>
-							<p>{"Endtime: " + endtime}</p>
+							<p>{"Endtime: " + (isActive ? "Not started" : endtime)}</p>
 							<hr />
-							{canBid ? (
-								<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
-									onClick={setBid} disabled={!isConnected && accounts[0] !== owner}>
+							{canBid ? ( <Row className="center-items">
+								<InputGroup style={{width: "30%"}}>
+									<FormControl placeholder="Bid" size="lg" onChange={(e) => setUserBid(e.target.value)}/>
+									<InputGroup.Append>
+										<InputGroup.Text>€</InputGroup.Text>
+									</InputGroup.Append>
+								</InputGroup>
+								<Button style={{width: "50%", marginLeft: "1em" }} variant="outline-secondary" size="lg" 
+									onClick={setBid} disabled={!isConnected}>
 									Set a bid
 								</Button>
-							) : ( <>
+							</Row>) : ( <>
 								<Alert variant="warning" style={{width: "fit-content", margin: "1rem auto"}}>
 									In order to participate you need a security deposit!
 								</Alert>
 								<Button style={{width: "50%"}} variant="outline-secondary" size="lg" 
-									onClick={deposit_money} disabled={!isConnected && accounts[0] !== owner}>
+									onClick={deposit_money} disabled={!isConnected}>
 										Deposit Money
 								</Button>
 							</> )}							
