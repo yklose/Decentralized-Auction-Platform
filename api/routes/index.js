@@ -124,7 +124,11 @@ router.post("/auction/:identifier/unseal", function(req, res) {
     auctionToUnseal['revealed_bids'] = {}
   }
 
-  auctionToUnseal['revealed_bids'][addr] = bid;
+  auctionToUnseal['revealed_bids'][addr] = {
+    'bid': bid,
+    'nonce': nonce,
+    'hash': hash
+  };
 
   let unsealed_amount = Object.keys(auctionToUnseal['revealed_bids']).length
   let sealed_amount = Object.keys(auctionToUnseal['latest_bids']).length
