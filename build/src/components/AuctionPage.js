@@ -65,6 +65,9 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 			contract.methods.get_deposit_balance(idx).call({ from: accounts[0] })
 			.then((deposit) => setCanBid(parseInt(deposit) >= 5*ether));
 
+			contract.methods.is_active(idx).call()
+			.then((is) => setIsActive(is))
+
 		}
 
 	}, [idx, contract, accounts])
@@ -81,31 +84,15 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 					} else {
 						setHighestBid(event.returnValues.value)
 						setIsActive(event.returnValues.blockNr < endtime)
+						if(event.returnValues.blockNr >= endtime) {
+							contractSocket.methods.get_winner(idx).call()
+							.then((win) => setWinner(win.winner))
+						}
 						console.log("BidEvent", event.returnValues)
 					}
 			})
 		}
 	}, [contractSocket, endtime, idx])
-
-	//Gets the winner when the endtime has passed
-	useEffect(() => {
-		if(web3 !== null && Object.keys(contract).length !== 0 && endtime !== "0" && idx !== undefined) {
-			web3.eth.getBlockNumber()
-			.then((blockNr) => {
-				if(blockNr >= endtime) {
-					setIsActive(false)
-					contract.methods.get_winner(idx).call()
-					.then((res) => setWinner(res.winner))
-					// fetch(`http://localhost:5000/auction/${match.params.identifier}/endOpen`, {method:"POST"})
-					// .then((res) => {
-					// 	res.json().then(async (res) => {
-					// 		console.log(res)
-					// 	})
-					// })
-				}
-			})
-		}
-	}, [match, web3, endtime, contract, idx])
 
 	const setBid = async () => {
 		// Function can only be executed properly if an account is connected
