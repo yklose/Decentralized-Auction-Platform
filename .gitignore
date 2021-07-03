@@ -1,7 +1,7 @@
 /build/node_modules
 /build/yarn.lock
 /build/package-lock.json
-/build/contracts
+/build/src/contracts
 
 /api/node_modules
 /api/package-lock.json

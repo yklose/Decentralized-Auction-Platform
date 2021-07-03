@@ -102,6 +102,10 @@ contract AuctionHouse {
         
     }
 
+    function is_active(uint idx) public view returns (bool) {
+        return auctions[idx].active && block.number < auctions[idx].endtime;
+    }
+
     function deposit_money(uint idx) public payable returns (uint){
         // Deposit money in order to be able to participate
         auctions[idx].deposit[msg.sender] += msg.value;
@@ -172,8 +176,6 @@ contract AuctionHouse {
     }    
 
     function get_winner(uint idx) public view returns (address winner, uint bid) {
-        // gets the winner in an open price auction
-        require(auctions[idx].endtime <= block.number, "ERROR: Get winner can only be called when auction is over");
         require(auctions[idx].sealed_auction == false, "ERROR: The function get winner can only be called on open auctions.");
         uint winning_bid=0;
         address winner_address=get_owner(idx);
