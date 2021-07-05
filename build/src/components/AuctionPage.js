@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { run as runHolder } from 'holderjs/holder';
+import images from './images'
 import { Container, Row, Col, Image, Button, Alert, FormControl, InputGroup, Spinner } from 'react-bootstrap';
 
 import { Card } from 'react-bootstrap'
@@ -11,7 +11,7 @@ const ether = 10**18;
 const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts }) => {
 	// items - Array with all the items to display
 	//NOTE: Currently only a placeholder item is displayed
-	const [auction, setAuction] = useState({})
+	const [auction, setAuction] = useState({item: "Unnamed Auction", description: "Unnamed Auction", img: ""})
 	const [highestBid, setHighestBid] = useState("Please connect with a wallet to see the highest bid")
 	const [endtime, setEndtime] = useState("0")
 	const [loadEndtime, setLoadEndtime] = useState(false)
@@ -20,11 +20,6 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 	const [userBid, setUserBid] = useState(0)
 	const [isActive, setIsActive] = useState(false)
 	const [winner, setWinner] = useState(null)
-
-	// Renders the temp picture
-	useEffect(() => {
-		runHolder("auction-holder-image")
-	})
 
 	// Get idx and auction data based on identifier
 	useEffect(() => {
@@ -40,10 +35,10 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 		}
 
 		const fetch_auction_data = async (identifier) => {
-
 			let auction_arr = auctions.filter((e) => e.identifier === parseInt(identifier))
 			if(auction_arr.length !== 0) {
 				setAuction(auction_arr[0])
+				console.log(auction)
 			} else {
 				setAuction({item: "Unnamed auction", description: "Unnamed Artist", img: "holder.js/500x500", sealed: false})
 			}
@@ -67,9 +62,7 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 
 			contract.methods.is_active(idx).call()
 			.then((is) => setIsActive(is))
-
 		}
-
 	}, [idx, contract, accounts])
 
 	//Listens to the BidEvents
@@ -156,6 +149,14 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 		});
 	}
 
+	const getImage = () => {
+		const img = images.filter((e) => e.id === auction.img)
+		if(img.length === 0) {
+			return ""
+		}
+		return img[0].img
+	}
+
 	return (
 		<Container style={{ maxWidth: "90%", marginTop: "1rem" }}>
 			<Button style={{position: "absolute", left: 0, top: "4em", backgroundColor: "white", border: "none"}}
@@ -163,7 +164,7 @@ const AuctionPage = ({ web3, contractSocket, auctions, contract, match, accounts
 				Start Auction</Button>
 			<Row>
 				<Col xs="6" className="center-items">
-					<Image src={auction.img === undefined ? "holder.js/100px160" : auction.img} className="auction-holder-image" rounded style={{margin: "auto"}} />
+					<Image src={getImage()} rounded style={{margin: "auto"}} fluid/>
 				</Col>
 				<Col xs={{span: 4, offset: 1}} style={{ margin: "auto", color: "grey" }} className="text-center">
 					<h1>{auction.item}</h1>

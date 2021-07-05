@@ -1,18 +1,22 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
-import { run as runHolder } from 'holderjs/holder';
+import images from './images';
 import { Link } from 'react-router-dom';
 
 // Component which displays one single items - to be expanded
 const Item = ({ identifier, item, description, img }) => {
 
-  useEffect(() => {
-    runHolder("item-holder-image")
-  })
+  const getImage = () => {
+		const imag = images.filter((e) => e.id === img)
+		if(imag.length === 0) {
+			return `url('')`
+		}
+		return `url('${imag[0].img}')`
+	}
 
   return (
-    <div className="custom-card" style={{backgroundImage:`url(${img})`}}>
+    <div className="custom-card" style={{backgroundImage: getImage()}}>
       <div className="custom-card-content"> 
         <h3 className="custom-card-title">
           {item}

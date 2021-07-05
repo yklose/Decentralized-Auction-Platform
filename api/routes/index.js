@@ -7,7 +7,7 @@ router.use(cors())
 
 var auctionHouse = require("../contracts/auctionHouse");
 
-let auctionKeys = ['item', 'description', 'sealed'];
+let auctionKeys = ['item', 'description', 'sealed', 'img'];
 let unsealKeys = ['nonce', 'bid', 'address'];
 /**
  * Used to check whether the passed json has the necessary keys

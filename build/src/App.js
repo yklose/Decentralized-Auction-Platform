@@ -64,7 +64,8 @@ class App extends Component {
       body: JSON.stringify({
         item: item,
         description: description,
-        sealed: sealed
+        sealed: sealed,
+        img: img
       }),
     });
 

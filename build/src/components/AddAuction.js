@@ -43,7 +43,7 @@ const AddAuction = ({ onAdd, onClose, show }) => {
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Specify an Image</Form.Label>
-                            <Form.Control type="text" placeholder="URL to Image" onChange={(e) => setImg(e.target.value)}/>
+                            <Form.Control type="number" placeholder="Image" onChange={(e) => setImg(e.target.value)}/>
                         </Form.Group>    
                 </Modal.Body>
                 <Modal.Footer>

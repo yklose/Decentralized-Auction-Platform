@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-import { run as runHolder } from 'holderjs/holder';
+import sothebys from './images/Sothebys.svg'
 import { Link } from 'react-router-dom';
 
 import { Container, Row, Button, Image, Col, FormControl } from 'react-bootstrap';
@@ -11,15 +11,11 @@ import { Items } from './index';
 const StartPage = ({ auctions }) => {
     // exhibits: should be fetched by DB query, the exhibits currently available
 
-    useEffect(() => {
-        runHolder("login-holder-image")
-    });
-
     return (
         <Container style={{maxWidth: "90%"}}>
             <Row style={{marginTop: "1.5rem"}}>
 
-                <Image src="holder.js/100px250" fluid className="login-holder-image"/>
+                <Image src={sothebys} fluid className="login-holder-image" style={{width: "80%", margin: "auto"}}/>
                 <Col className="col-md-12 text-right" style={{transform: "translateY(-3.5rem)", marginBottom: "-2rem"}}>
                     <Link to="/info">
                         <Button variant="outline-secondary" size="lg"> More Info </Button>
