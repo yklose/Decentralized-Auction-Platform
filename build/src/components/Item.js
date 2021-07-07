@@ -22,7 +22,9 @@ const Item = ({ identifier, item, description, img }) => {
           {item}
         </h3>
         <p className="custom-card-body">
-          {description}
+          {description} 
+        </p>
+        <p className="custom-card-body">
         </p>
         <Link to={"/auctions/"+identifier} className="custom-card-link">
           Details

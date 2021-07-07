@@ -5,6 +5,8 @@ import image04 from './images/4.png'
 import image05 from './images/5.png'
 import image06 from './images/6.png'
 import image07 from './images/7.png'
+import image08 from './images/8.png'
+import image09 from './images/9.png'
 
 const images = [
     { id: "1", img: image01},
@@ -13,7 +15,9 @@ const images = [
     { id: "4", img: image04},
     { id: "5", img: image05},
     { id: "6", img: image06},
-    { id: "7", img: image07}
+    { id: "7", img: image07},
+    { id: "8", img: image08},
+    { id: "9", img: image09}
 ]
 
 export default images

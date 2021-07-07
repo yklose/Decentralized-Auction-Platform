@@ -1,13 +1,17 @@
-# Simple AuctionHouse
+# AuctionHouse
 
-First implementation of an action house. 
+First working implementation of an action house. 
+
+![alt text](./readme_images/StartingPage.png?raw=true)
+
+![alt text](./readme_images/BiddingPage.png?raw=true)
 
 **Current Rules**:
 - Multiple contracts are allowed 
 - Auction types are: sealed and open
 - Everyone can create a auction and is automatically the owner
 - To create an auction an identifier is needed. This idendifier is unique and will not be accepted otherwise. 
-- Bidders can get the auction index by having the auction identifier (maybe combine in future version)
+- Bidders can get the auction index by having the auction identifier 
 - The owner (seller) can not bid on the object
 - Bidders need to deposit 5 ether to place bids
 - If the action has not started, bidders can refund the deposit
@@ -29,7 +33,6 @@ First implementation of an action house.
 
 # Optional Dependencies
 - Solidity Syntax Highlighting for the IDE of your choice
-- Install and add [openzeppelin-contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) ` npm install @openzeppelin/contracts `
 - **For running the frontend locally**:
     - Install Visual Studio 2019
     - Choose Workload **Desktop Development with C++** (Needed for compiling underlying node libraries using C++)
@@ -42,11 +45,9 @@ First implementation of an action house.
     3. Import any Account from the Blockchain to Metamask using the private key provided
 2. Set up Truffle
     1. `truffle compile` - compiles the .sol Contracts in contracts/
-    2. `truffle migrate` - migrate the contracts to the blockchain (can be seen in Ganache)
-    3. `cd build`
-    4. `npm run start` - hosts the frontend located in build/src on localhost:3000
-    5. `cd api`, `npm run start` - hosts the backend api located in api/ on localhost:5000
+    2. `truffle migrate --reset` - migrate the contracts to the blockchain (can be seen in Ganache)
+    3. `cd build`, `npm run start` - hosts the frontend located in build/src on localhost:3000
+    4. `cd api`, `npm run start` - hosts the backend api located in api/ on localhost:5000
 
 # Test the contracts
-
 Run `truffle test`

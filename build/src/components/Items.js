@@ -12,7 +12,7 @@ const Items = ({ items }) => {
     return (
         <Row style={{marginTop: "1.5rem"}}>
             {items.map((auction, index) => (
-                <Col xs={3} key={index} style={{marginBottom: "1.5rem"}}>
+                <Col xs={3} key={index} style={{marginBottom: "2.5rem"}}>
                     <Item {...auction}/>
                 </Col>
             ))}
